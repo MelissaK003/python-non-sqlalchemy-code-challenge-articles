@@ -1,4 +1,4 @@
-import pytest
+# import pytest
 
 from classes.many_to_many import Article
 from classes.many_to_many import Magazine
