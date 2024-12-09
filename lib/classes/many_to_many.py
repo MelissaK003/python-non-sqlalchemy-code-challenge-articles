@@ -19,6 +19,12 @@ class Article:
         self._magazine = magazine
         self.__title = title
 
+        #Add article to either author's or magazine list
+        if hasattr(author, '_articles'):
+            author._articles.append(self)
+        if hasattr(magazine, '_articles'):
+            magazine._articles.append(self)
+
          #Append the current instance to the class variable list
         Article.all_articles.append(self)
 
@@ -78,12 +84,21 @@ class Author:
         return list(set(article.magazine for article in self.articles()))
 
     def add_article(self, magazine, title):
+        existing_articles = [article for article in self._articles if article.title == title and article.magazine == magazine]
+        if existing_articles:
+            return existing_articles[0]
+        
+        # Create and return new article
         return Article(self, magazine, title)
 
     def topic_areas(self):
+        if not self._articles:
+            return None
         return list(set(magazine.category for magazine in self.magazines()))
 
 class Magazine:
+    _all_magazines = []  # Moved outside __init__ as a class variable
+
     def __init__(self, name, category): #initializes instance
          #Ensures the title is a string
         if not isinstance(name, str):
@@ -101,6 +116,8 @@ class Magazine:
         # Assign a value to instance variable
         self._name = name
         self._category = category
+        self._articles = []  # Track articles for this magazine
+        Magazine._all_magazines.append(self)
 
     @property
     def name(self):
@@ -133,3 +150,27 @@ class Magazine:
 
     def contributors(self):
         return list(set(article.author for article in self.articles()))
+
+    def article_titles(self):
+        if not self._articles:
+            return None
+        return [article.title for article in self._articles]
+
+    def contributing_authors(self):
+        if not self._articles:
+            return None
+        authors = {}
+        for article in self._articles:
+            if article.author not in authors:
+                authors[article.author] = 0
+            authors[article.author] += 1
+        return [author for author, count in authors.items() if count > 2] or None
+
+    @classmethod
+    def top_publisher(cls):
+        if not cls._all_magazines:
+            return None
+        most_articles_magazine = max(cls._all_magazines, key=lambda magazine: len(magazine._articles), default=None)
+        if most_articles_magazine is None or len(most_articles_magazine._articles) == 0:
+            return None
+        return most_articles_magazine
